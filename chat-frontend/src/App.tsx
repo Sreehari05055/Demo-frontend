@@ -152,27 +152,29 @@ function App() {
   }
  
   const handleSend = async () => {
-    if (!input.trim()) return
+    // allow send when there's text OR one/more selected files
+    if (!input.trim() && !(selectedFile && selectedFile.length > 0)) return
     setMessages((prev) => [...prev, { sender: 'user', text: input }])
     setLoading(true)
     setMessages((prev) => [...prev, { sender: 'bot', text: '', raw: '' }])
     scrollToBottom()
     abortControllerRef.current = new AbortController()
     try {
+      const headers: Record<string, string> = { 'X-Session-ID': sessionId }
       const opts: RequestInit = { method: 'POST', signal: abortControllerRef.current.signal }
       if (selectedFile && selectedFile.length > 0) {
         const fd = new FormData()
         fd.append('question', input)
-        // include session id so the backend can group requests per tab
-        fd.append('session_id', sessionId)
+
         for (const f of selectedFile) {
           fd.append('file', f)
         }
         opts.body = fd
+        opts.headers = headers
       } else {
-        opts.headers = { 'Content-Type': 'application/json' }
-        opts.body = JSON.stringify({ question: input, session_id: sessionId })
-        
+        headers['Content-Type'] = 'application/json'
+        opts.headers = headers
+        opts.body = JSON.stringify({ question: input})
       }
       const response = await fetch(API_URL, opts)
       if (!response.body) throw new Error('No response body')
