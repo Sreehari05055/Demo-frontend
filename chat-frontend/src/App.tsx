@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react'
-import { marked } from 'marked' 
+import { marked } from 'marked'
 import './App.css'
 const API_URL = 'http://localhost:8000/api/chat' // Update with your backend API URL
- 
+
 interface Message {
   sender: 'user' | 'bot'
   text: string
@@ -21,7 +21,7 @@ const MarkdownRenderer = ({ markdown }: { markdown: string }) => {
     />
   )
 }
- 
+
 const styles = {
   container: {
     //width:'300%',
@@ -131,7 +131,7 @@ function App() {
     } catch (e) {
       // ignore sessionStorage errors (e.g., SSR or blocked storage)
     }
-    const id = `session_${Date.now()}_${Math.random().toString(36).slice(2,9)}`
+    const id = `session_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
     try {
       sessionStorage.setItem(key, id)
     } catch (e) {
@@ -142,7 +142,7 @@ function App() {
   const abortControllerRef = useRef<AbortController | null>(null)
   const chatWindowRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
- 
+
   const scrollToBottom = () => {
     setTimeout(() => {
       if (chatWindowRef.current) {
@@ -150,7 +150,7 @@ function App() {
       }
     }, 100)
   }
- 
+
   const handleSend = async () => {
     // allow send when there's text OR one/more selected files
     if (!input.trim() && !(selectedFile && selectedFile.length > 0)) return
@@ -174,7 +174,7 @@ function App() {
       } else {
         headers['Content-Type'] = 'application/json'
         opts.headers = headers
-        opts.body = JSON.stringify({ question: input})
+        opts.body = JSON.stringify({ question: input })
       }
       const response = await fetch(API_URL, opts)
       if (!response.body) throw new Error('No response body')
@@ -188,33 +188,53 @@ function App() {
         if (value) {
           const chunk = new TextDecoder().decode(value)
           buffer += chunk
-          let match
-          const regex = /data:\s*\{(?:'content'|"content")\s*:\s*(['"])([\s\S]*?)\1\s*\}/g
-          let lastIndex = 0
-          while ((match = regex.exec(buffer)) !== null) {
-            const processedContent = match[2]
-              .replace(/\\n/g, '\n')
-              .replace(/\\t/g, '\t')
-              .replace(/\\r/g, '\r')
-              .replace(/\\\\/g, '\\')
-              .replace(/\\"/g, '"')
-              .replace(/\\'/g, "'")
-            botRaw += processedContent
-            lastIndex = regex.lastIndex
-            setMessages((prev) => {
-              const updated = [...prev]
-              for (let i = updated.length - 1; i >= 0; i--) {
-                if (updated[i].sender === 'bot') {
-                  updated[i] = { ...updated[i], text: botRaw, raw: botRaw }
-                  break
-                }
+          const lines = buffer.split(/\r?\n/);
+          buffer = lines.pop() || ''; // Keep the last incomplete line
+
+          for (const line of lines) {
+            if (line.trim().startsWith('data: ')) {
+              console.log("Raw line:", line); // Debugging
+              const jsonStr = line.replace('data: ', '').trim();
+              console.log("JSON string to parse:", jsonStr); // Debugging
+              if (jsonStr === '[DONE]') {
+                done = true;
+                break;
               }
-              return updated
-            })
-            scrollToBottom()
-          }
-          if (lastIndex > 0) {
-            buffer = buffer.slice(lastIndex)
+              try {
+                // Sometimes data fields might have issues, simple cleanup
+                const data = JSON.parse(jsonStr);
+                if (data.content !== undefined && data.content !== null) {
+                  let newContent = "";
+
+                  // Handle array format (e.g. Anthropic/LangChain structure: content: [{text: "...", ...}])
+                  if (Array.isArray(data.content)) {
+                    if (data.content.length > 0 && data.content[0].text) {
+                      newContent = data.content[0].text;
+                    }
+                  } else {
+                    // Handle simple string format
+                    newContent = String(data.content);
+                  }
+
+                  if (newContent) {
+                    botRaw += newContent;
+                    setMessages((prev) => {
+                      const updated = [...prev]
+                      for (let i = updated.length - 1; i >= 0; i--) {
+                        if (updated[i].sender === 'bot') {
+                          updated[i] = { ...updated[i], text: botRaw, raw: botRaw }
+                          break
+                        }
+                      }
+                      return updated
+                    })
+                    scrollToBottom()
+                  }
+                }
+              } catch (e) {
+                console.error("Error parsing stream chunk", e);
+              }
+            }
           }
         }
       }
@@ -242,7 +262,7 @@ function App() {
       scrollToBottom()
     }
   }
- 
+
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !loading) {
       handleSend()
@@ -289,136 +309,136 @@ function App() {
       return copy.length ? copy : null
     })
   }
- 
+
   return (
     <>
-<div style={styles.container}>
-      <div ref={chatWindowRef} style={styles.chatWindow}>
-        {messages.map((msg, idx) => (
-          <div key={idx} style={styles.messageRow(msg.sender === 'user')}>
-            <div style={styles.messageBubble(msg.sender === 'user')}>
-              {msg.sender === 'bot' ? (
-                <MarkdownRenderer markdown={msg.raw ?? msg.text} />
-              ) : (
-                msg.text
-              )}
-              {msg.sender === 'bot' && loading && idx === messages.length - 1 && (
-                <span style={styles.loadingSpinner} aria-label="Loading">
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 50 50"
-                    style={{ display: 'block' }}
-                  >
-                    <circle
-                      cx="25"
-                      cy="25"
-                      r="20"
-                      fill="none"
-                      stroke="#1976d2"
-                      strokeWidth="5"
-                      strokeDasharray="31.4 31.4"
-                      strokeLinecap="round"
-                      transform="rotate(-90 25 25)"
+      <div style={styles.container}>
+        <div ref={chatWindowRef} style={styles.chatWindow}>
+          {messages.map((msg, idx) => (
+            <div key={idx} style={styles.messageRow(msg.sender === 'user')}>
+              <div style={styles.messageBubble(msg.sender === 'user')}>
+                {msg.sender === 'bot' ? (
+                  <MarkdownRenderer markdown={msg.raw ?? msg.text} />
+                ) : (
+                  msg.text
+                )}
+                {msg.sender === 'bot' && loading && idx === messages.length - 1 && (
+                  <span style={styles.loadingSpinner} aria-label="Loading">
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 50 50"
+                      style={{ display: 'block' }}
                     >
-                      <animateTransform
-                        attributeName="transform"
-                        type="rotate"
-                        from="0 25 25"
-                        to="360 25 25"
-                        dur="1s"
-                        repeatCount="indefinite"
-                      />
-                    </circle>
-                  </svg>
-                </span>
-              )}
+                      <circle
+                        cx="25"
+                        cy="25"
+                        r="20"
+                        fill="none"
+                        stroke="#1976d2"
+                        strokeWidth="5"
+                        strokeDasharray="31.4 31.4"
+                        strokeLinecap="round"
+                        transform="rotate(-90 25 25)"
+                      >
+                        <animateTransform
+                          attributeName="transform"
+                          type="rotate"
+                          from="0 25 25"
+                          to="360 25 25"
+                          dur="1s"
+                          repeatCount="indefinite"
+                        />
+                      </circle>
+                    </svg>
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* Selected files shown above the input row */}
+        {selectedFile && (
+          <div style={{ padding: '0 12px', marginTop: 8 }}>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {selectedFile.map((f, i) => (
+                <div
+                  key={i}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '6px 8px',
+                    background: '#f1f5f9',
+                    borderRadius: 8,
+                    border: '1px solid #dfe6ee',
+                    maxWidth: 360
+                  }}
+                >
+                  <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 13, color: '#111' }} title={f.name}>
+                    {f.name}
+                  </div>
+                  <button
+                    onClick={() => removeFile(i)}
+                    style={{
+                      marginLeft: 8,
+                      background: '#e53e3e',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: 12,
+                      width: 22,
+                      height: 22,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer'
+                    }}
+                    aria-label={`Remove ${f.name}`}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
-        ))}
-      </div>
-      {/* Selected files shown above the input row */}
-      {selectedFile && (
-        <div style={{ padding: '0 12px', marginTop: 8 }}>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {selectedFile.map((f, i) => (
-              <div
-                key={i}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '6px 8px',
-                  background: '#f1f5f9',
-                  borderRadius: 8,
-                  border: '1px solid #dfe6ee',
-                  maxWidth: 360
-                }}
-              >
-                <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 13, color: '#111' }} title={f.name}>
-                  {f.name}
-                </div>
-                <button
-                  onClick={() => removeFile(i)}
-                  style={{
-                    marginLeft: 8,
-                    background: '#e53e3e',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: 12,
-                    width: 22,
-                    height: 22,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer'
-                  }}
-                  aria-label={`Remove ${f.name}`}
-                >
-                  ×
-                </button>
-              </div>
-            ))}
+        )}
+        <div style={styles.inputContainer}>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept=".csv,.xlsx,.xls"
+            style={{ display: 'none' }}
+            onChange={handleFileChange}
+          />
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <button
+              onClick={handleAttachClick}
+              title="Attach file"
+              style={styles.attachButton}
+              disabled={loading}
+            >
+              +
+            </button>
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleInputKeyDown}
+              disabled={loading}
+              placeholder="Type your message..."
+              style={styles.input}
+            />
+            <button
+              onClick={handleSend}
+              disabled={loading || (!input.trim() && !(selectedFile && selectedFile.length > 0))}
+              style={styles.sendButton(loading || (!input.trim() && !(selectedFile && selectedFile.length > 0)))}
+            >
+              Send
+            </button>
           </div>
         </div>
-      )}
-      <div style={styles.inputContainer}>
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          accept=".csv,.xlsx,.xls"
-          style={{ display: 'none' }}
-          onChange={handleFileChange}
-        />
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <button
-            onClick={handleAttachClick}
-            title="Attach file"
-            style={styles.attachButton}
-            disabled={loading}
-          >
-            +
-          </button>
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleInputKeyDown}
-            disabled={loading}
-            placeholder="Type your message..."
-            style={styles.input}
-          />
-          <button
-            onClick={handleSend}
-            disabled={loading || (!input.trim() && !(selectedFile && selectedFile.length > 0))}
-            style={styles.sendButton(loading || (!input.trim() && !(selectedFile && selectedFile.length > 0)))}
-          >
-            Send
-          </button>
-        </div>
-      </div>
-      <style>
-        {`
+        <style>
+          {`
           .blinking-cursor {
             font-weight: 100;
             font-size: 18px;
@@ -472,8 +492,8 @@ function App() {
             font-weight: 700;
           }
         `}
-      </style>
-    </div>    </>
+        </style>
+      </div>    </>
   )
 }
 
