@@ -131,7 +131,7 @@ function App() {
     } catch (e) {
       // ignore sessionStorage errors (e.g., SSR or blocked storage)
     }
-    const id = `session_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
+    const id = `session_${Date.now()}_${Math.random().toString(36).slice(2,9)}`
     try {
       sessionStorage.setItem(key, id)
     } catch (e) {
