@@ -10,6 +10,7 @@ This is a demo frontend for [ChatPilot](https://github.com/Sreehari05055/ChatPil
 - Search the web for current information
 - Upload and analyze CSV/Excel files
 - View streaming responses in real-time
+ - Ingest RAG documents via a dedicated `/ingest` page
 
 ## Prerequisites
 
@@ -50,6 +51,9 @@ The frontend will start on `http://localhost:5173` (or the next available port).
 1. Open your browser to `http://localhost:5173`
 2. Start chatting with ChatPilot
 3. Upload documents or data files using the upload button
+4. To add RAG documents specifically, open `http://localhost:5173/ingest` and upload your files there. The ingest page sends files to the backend `/api/ingest` endpoint.
+	- Supported document types: PDF, DOC, DOCX, TXT, MD, and common image formats (if your backend accepts them).
+	- The frontend posts files directly to `/api/ingest`; no session ID is required by the ingest endpoint.
 4. Ask questions
 
 ## Development
@@ -58,6 +62,16 @@ Built with:
 - React/Vue/Svelte (whichever you're using)
 - Vite for fast development
 - Modern ES6+ JavaScript
+
+## Ingest Page (/ingest)
+
+Open `/ingest` on the running frontend (for example: `http://localhost:5173/ingest`) to upload documents used for retrieval-augmented generation (RAG).
+
+- Files uploaded on this page are POSTed to the backend at `/api/ingest`.
+- Make sure your ChatPilot backend exposes and accepts requests at `http://localhost:8000/api/ingest` (or proxy `/api/ingest` to the backend) and that CORS is configured if the backend is on a different origin.
+- After successful ingest, the backend should index the documents so they can be used by the chat interface for RAG answers.
+
+Add a navigation link or open the URL directly to use the ingest page.
 
 ## Need Help?
 
