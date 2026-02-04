@@ -1,0 +1,356 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji",
+    "Segoe UI Emoji";
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New";
+
+  --shadow-2xs: 0 1px 0 rgba(0, 0, 0, 0.4);
+  --shadow-xs: 0 1px 0 rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 1px 0 rgba(0, 0, 0, 0.45), 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+:root {
+  --background: 60 2% 15%; /* #262625 */
+  --foreground: 0 0% 98%;
+
+  --card: 0 0% 10%; /* #191919 */
+  --card-foreground: 0 0% 98%;
+
+  --popover: 0 0% 10%;
+  --popover-foreground: 0 0% 98%;
+
+  --primary: 102 100% 87%; /* #D1FFBD */
+  --primary-foreground: 60 6% 10%;
+
+  --secondary: 0 0% 14%;
+  --secondary-foreground: 0 0% 96%;
+
+  --muted: 0 0% 14%;
+  --muted-foreground: 0 0% 70%;
+
+  --accent: 0 0% 14%;
+  --accent-foreground: 0 0% 96%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+
+  --border: 0 0% 20%;
+  --input: 0 0% 20%;
+  --ring: 102 100% 87%;
+
+  --radius: 12px;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .rag-panel {
+    background: radial-gradient(1200px 600px at 20% 10%, rgba(209, 255, 189, 0.06), transparent 60%),
+      radial-gradient(900px 500px at 85% 15%, rgba(255, 255, 255, 0.06), transparent 55%),
+      hsl(var(--background));
+  }
+
+  .rag-surface {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+  }
+
+  .rag-surface-2 {
+    background: rgba(25, 25, 25, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  }
+
+  .rag-input {
+    background: hsl(var(--card));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  .rag-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+  }
+
+  .rag-scrollbar::-webkit-scrollbar {
+    height: 10px;
+    width: 10px;
+  }
+
+  .rag-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  .rag-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.26);
+    background-clip: padding-box;
+  }
+
+  .rag-prose {
+    color: rgba(255, 255, 255, 0.92);
+  }
+
+  .rag-prose pre,
+  .rag-prose code {
+    background: #1e1e1e !important;
+    color: #dcdcdc !important;
+    border-radius: 8px;
+    padding: 0.6em 0.9em;
+    font-size: 13px;
+    font-family: var(--font-mono);
+    overflow-x: auto;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .rag-prose code:not(pre code) {
+    padding: 0.2em 0.4em;
+    font-size: 0.9em;
+  }
+
+  .rag-prose pre {
+    margin: 1em 0;
+  }
+
+  .rag-prose table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1.5em 0;
+    font-size: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .rag-prose th,
+  .rag-prose td {
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 10px 12px;
+    text-align: left;
+  }
+
+  .rag-prose th {
+    background: rgba(255, 255, 255, 0.05);
+    font-weight: 600;
+  }
+
+  .rag-prose blockquote {
+    border-left: 4px solid hsl(var(--primary));
+    margin: 1.25em 0;
+    padding: 0.8em 1.25em;
+    color: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 4px 12px 12px 4px;
+  }
+
+  .rag-prose h1,
+  .rag-prose h2,
+  .rag-prose h3,
+  .rag-prose h4 {
+    color: #fff;
+    margin: 1.5em 0 0.5em 0;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .rag-prose h1 { font-size: 1.75rem; }
+  .rag-prose h2 { font-size: 1.5rem; }
+  .rag-prose h3 { font-size: 1.25rem; }
+
+  .rag-prose ul, .rag-prose ol {
+    margin: 1em 0;
+    padding-left: 1.5rem;
+  }
+  
+  .rag-prose ul { list-style-type: disc !important; }
+  .rag-prose ol { list-style-type: decimal !important; }
+  
+  .rag-prose li {
+    margin: 0.4em 0;
+    display: list-item !important;
+  }
+
+  .rag-prose li::marker {
+    color: hsl(var(--primary));
+    font-weight: bold;
+  }
+
+  .rag-prose p {
+    margin: 0.8em 0;
+    line-height: 1.6;
+  }
+}
+
+/* Gooey Cell / Virus Blob Animation (Idea 2) */
+.gooey-container {
+  filter: url('#goo');
+  position: relative;
+  width: 60px;  /* Increased from 45px */
+  height: 35px; /* Increased from 25px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 0;
+  overflow: visible; /* Ensure we don't clip the filter results */
+}
+
+.gooey-dot {
+  position: absolute;
+  width: 10px; /* Slightly smaller for better fluid dynamics */
+  height: 10px;
+  background-color: hsl(var(--primary));
+  border-radius: 50%;
+  opacity: 0.95;
+}
+
+.gooey-dot:nth-child(1) { animation: move-1 3.2s infinite ease-in-out; }
+.gooey-dot:nth-child(2) { animation: move-2 2.8s infinite ease-in-out; }
+.gooey-dot:nth-child(3) { animation: move-3 3.5s infinite ease-in-out; }
+.gooey-dot:nth-child(4) { animation: move-4 2.4s infinite ease-in-out-reverse; }
+.gooey-dot:nth-child(5) { animation: move-5 3.0s infinite linear; }
+
+@keyframes move-1 {
+  0%, 100% { transform: translate(-12px, 0px) scale(1); }
+  50% { transform: translate(12px, 0px) scale(0.8); }
+}
+
+@keyframes move-2 {
+  0%, 100% { transform: translate(12px, 2px) scale(0.9); }
+  50% { transform: translate(-12px, -2px) scale(1.1); }
+}
+
+@keyframes move-3 {
+  0%, 100% { transform: translate(0px, -6px) scale(1); }
+  50% { transform: translate(0px, 6px) scale(1.2); }
+}
+
+@keyframes move-4 {
+  0%, 100% { transform: translate(-4px, 4px) scale(1.1); }
+  50% { transform: translate(4px, -4px) scale(0.7); }
+}
+
+@keyframes move-5 {
+  0% { transform: rotate(0deg) translateX(8px) rotate(0deg); }
+  100% { transform: rotate(360deg) translateX(8px) rotate(-360deg); }
+}
+
+/* Organic Puffer-Fish / Liquid Blob animation for streaming */
+.streaming-dot {
+  width: 14px;
+  height: 14px;
+  background-color: hsl(var(--primary));
+  display: inline-block;
+  margin-left: 8px;
+  position: relative;
+  filter: blur(0.5px);
+  animation: 
+    blob-morph 4s ease-in-out infinite,
+    puffer-pulse 2s ease-in-out infinite,
+    blob-rotate 8s linear infinite;
+  vertical-align: middle;
+  box-shadow: 
+    0 0 10px hsl(var(--primary) / 0.4),
+    0 0 20px hsl(var(--primary) / 0.2);
+}
+
+.streaming-dot::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border: 1px solid hsl(var(--primary) / 0.3);
+  border-radius: inherit;
+  animation: aura-pulse 2s ease-out infinite;
+}
+
+@keyframes blob-morph {
+  0%, 100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+  33% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
+  66% { border-radius: 50% 50% 30% 70% / 40% 70% 40% 60%; }
+}
+
+@keyframes puffer-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+}
+
+@keyframes blob-rotate {
+  from { rotate: 0deg; }
+  to { rotate: 360deg; }
+}
+
+@keyframes aura-pulse {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { transform: scale(1.4); opacity: 1; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+@keyframes pulse-green {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(209, 255, 189, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 8px rgba(209, 255, 189, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(209, 255, 189, 0);
+  }
+}
+
+.blinking-cursor {
+  font-weight: 600;
+  font-size: 18px;
+  color: hsl(var(--primary));
+  animation: blink 1s step-end infinite;
+  margin-left: 2px;
+}
+@keyframes blink {
+  from, to { opacity: 1 }
+  50% { opacity: 0 }
+}
+

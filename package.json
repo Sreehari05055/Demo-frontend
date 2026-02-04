@@ -1,5 +1,9 @@
 {
   "dependencies": {
-    "marked": "^16.2.1"
+    "@types/react-syntax-highlighter": "^15.5.13",
+    "pdfjs-dist": "^4.0.379",
+    "react-markdown": "^10.1.0",
+    "react-syntax-highlighter": "^16.1.0",
+    "remark-gfm": "^4.0.1"
   }
 }
