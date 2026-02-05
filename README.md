@@ -1,16 +1,18 @@
 # ChatPilot Demo Frontend
 
-Simple web interface for ChatPilot - chat with your documents, search the web, and analyze data.
+Simple web interface for ChatPilot - chat with your documents using RAG with PDF highlighting and source navigation.
 
 ## What it does
 
 This is a demo frontend for [ChatPilot](https://github.com/Sreehari05055/ChatPilot). It provides a clean chat interface to interact with ChatPilot's features:
 
-- Upload and chat with documents (RAG)
+- Upload and chat with documents (RAG) with visual PDF highlighting
+- View retrieved sources with bounding box highlights on original PDFs
+- Upload and ingest documents directly in the sidebar
+- Upload and analyze CSV/Excel files in chat
 - Search the web for current information
 - Upload and analyze CSV/Excel files
 - View streaming responses in real-time
- - Ingest RAG documents via a dedicated `/ingest` page
 
 ## Prerequisites
 
@@ -31,15 +33,7 @@ cd chat-frontend
 npm install
 ```
 
-### 3. Start ChatPilot backend
-
-Make sure the ChatPilot backend is running on `http://localhost:8000`:
-```bash
-# In the ChatPilot directory
-python main.py --dev
-```
-
-### 4. Run the frontend
+### 3. Run the frontend
 ```bash
 npm run dev
 ```
@@ -49,29 +43,19 @@ The frontend will start on `http://localhost:5173` (or the next available port).
 ## Usage
 
 1. Open your browser to `http://localhost:5173`
-2. Start chatting with ChatPilot
-3. Upload documents or data files using the upload button
-4. To add RAG documents specifically, open `http://localhost:5173/ingest` and upload your files there. The ingest page sends files to the backend `/api/ingest` endpoint.
-	- Supported document types: PDF, DOC, DOCX, TXT, MD, and common image formats (if your backend accepts them).
-	- The frontend posts files directly to `/api/ingest`; no session ID is required by the ingest endpoint.
-4. Ask questions
+2. Upload documents using the left sidebar (PDF, DOC, DOCX, HTML, TXT, MD, images)
+3. Start chatting - responses will include source references
+4. Click source buttons to view PDF highlights showing exactly where information came from
+5. Upload CSV/Excel files in chat for data analysis
 
 ## Development
 
 Built with:
-- React/Vue/Svelte (whichever you're using)
+- React + TypeScript
 - Vite for fast development
-- Modern ES6+ JavaScript
-
-## Ingest Page (/ingest)
-
-Open `/ingest` on the running frontend (for example: `http://localhost:5173/ingest`) to upload documents used for retrieval-augmented generation (RAG).
-
-- Files uploaded on this page are POSTed to the backend at `/api/ingest`.
-- Make sure your ChatPilot backend exposes and accepts requests at `http://localhost:8000/api/ingest` (or proxy `/api/ingest` to the backend) and that CORS is configured if the backend is on a different origin.
-- After successful ingest, the backend should index the documents so they can be used by the chat interface for RAG answers.
-
-Add a navigation link or open the URL directly to use the ingest page.
+- PDF.js for document rendering
+- Tailwind CSS for styling
+- React Query for data fetching
 
 ## Need Help?
 
