@@ -38,8 +38,6 @@ npm install
 npm run dev
 ```
 
-The frontend will start on `http://localhost:5173` (or the next available port).
-
 ## Usage
 
 1. Upload documents using the left sidebar (PDF, DOC, DOCX, HTML, TXT, MD, images)
