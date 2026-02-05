@@ -42,11 +42,10 @@ The frontend will start on `http://localhost:5173` (or the next available port).
 
 ## Usage
 
-1. Open your browser to `http://localhost:5173`
-2. Upload documents using the left sidebar (PDF, DOC, DOCX, HTML, TXT, MD, images)
-3. Start chatting - responses will include source references
-4. Click source buttons to view PDF highlights showing exactly where information came from
-5. Upload CSV/Excel files in chat for data analysis
+1. Upload documents using the left sidebar (PDF, DOC, DOCX, HTML, TXT, MD, images)
+2. Start chatting - responses will include source references
+3. Click source buttons to view PDF highlights showing exactly where information came from
+4. Upload CSV/Excel files in chat for data analysis
 
 ## Development
 
