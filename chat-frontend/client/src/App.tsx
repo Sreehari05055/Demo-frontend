@@ -7,17 +7,14 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { queryClient } from "./lib/queryClient";
 import { PDFViewer } from "./components/PDFViewer";
-
-const CHAT_API_URL = "http://localhost:8000/api/chat";
-const INGEST_API_URL = "http://localhost:8000/api/ingest/";
+import { API_URLS } from "./config";
 
 type Source = {
   content: string;
   id: string;
   title: string;
-  doc_id: string;
-  page_label: string;
-  bboxes: any[];
+  pages: number[];
+  bboxes: { page: number; box: [number, number, number, number] }[];
   score: number;
 };
 
@@ -88,6 +85,8 @@ function AppShell() {
     }, 80);
   };
 
+  const getDocId = (source: Source): string => source.title.trim();
+
   const handleSend = async () => {
     if (!input.trim() && !(selectedFile && selectedFile.length > 0)) return;
 
@@ -117,7 +116,7 @@ function AppShell() {
         opts.body = JSON.stringify({ question: input });
       }
 
-      const response = await fetch(CHAT_API_URL, opts);
+      const response = await fetch(API_URLS.chat, opts);
       if (!response.body) throw new Error("No response body");
 
       const reader = response.body.getReader();
@@ -197,9 +196,6 @@ function AppShell() {
         }
       }
 
-      // If the model sent an automatic assistant greeting (common in some models),
-      // we used to remove it, but it was too aggressive. 
-      // Keeping all responses for now to ensure nothing disappears.
     } catch {
       setMessages((prev) => {
         const updated = [...prev];
@@ -306,7 +302,7 @@ function AppShell() {
       const fd = new FormData();
       for (const f of docs) fd.append("file", f);
 
-      const res = await fetch(INGEST_API_URL, { method: "POST", body: fd });
+      const res = await fetch(API_URLS.ingest, { method: "POST", body: fd });
       if (!res.ok) {
         const text = await res.text().catch(() => "");
         throw new Error(`Upload failed: ${res.status} ${text}`);
@@ -786,8 +782,12 @@ function AppShell() {
                                         {currentId}
                                       </div>
                                       <div className="min-w-0 flex-1">
-                                        <div className="text-sm font-semibold text-white/90 truncate">{src.doc_id}</div>
-                                        <div className="text-[10px] text-white/50 uppercase">Page {src.page_label}</div>
+                                        <div className="text-sm font-semibold text-white/90 truncate">{getDocId(src)}</div>
+                                        <div className="text-[10px] text-white/50 uppercase">
+                                          {src.pages.length > 1 
+                                            ? `Pages ${src.pages.join(', ')}` 
+                                            : `Page ${src.pages[0]}`}
+                                        </div>
                                       </div>
                                     </div>
                                     <div className="text-xs text-white/60 line-clamp-3 leading-relaxed">
@@ -809,8 +809,8 @@ function AppShell() {
                             Back to sources
                           </button>
                           <PDFViewer 
-                            docId={activeSource.doc_id}
-                            pageNumber={activeSource.page_label}
+                            docId={getDocId(activeSource)}
+                            pages={activeSource.pages}
                             bboxes={activeSource.bboxes}
                             content={activeSource.content}
                           />

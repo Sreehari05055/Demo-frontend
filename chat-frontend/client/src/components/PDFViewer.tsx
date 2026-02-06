@@ -1,33 +1,47 @@
 ﻿import { useEffect, useRef, useState, useMemo } from 'react';
 import * as pdfjs from 'pdfjs-dist';
+import { API_URLS } from '../config';
 
 // Configure PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 interface BBox {
-  box: [number, number, number, number]; // [x1, y1, x2, y2] normalized 0-1
-  text_snippet?: string;
+  box: [number, number, number, number]; // [x1, y1, x2, y2] in PDF coordinates
+  page: number;
 }
 
 interface PDFViewerProps {
   docId: string;
-  pageNumber: string | number;
-  bboxes?: BBox[];
+  pages: number[];   // All pages this source spans, e.g. [1, 2, 3]
+  bboxes?: BBox[];   // All bboxes across all pages
   content?: string;
 }
 
-export function PDFViewer({ docId, pageNumber, bboxes, content }: PDFViewerProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+export function PDFViewer({ docId, pages, bboxes, content }: PDFViewerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
-  const viewportRef = useRef<any>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [scale, setScale] = useState(1.0);
   const [showFullText, setShowFullText] = useState(false);
+  const [currentPageIndex, setCurrentPageIndex] = useState(0);
 
-  // Skip rendering if no bboxes
-  if (!bboxes || bboxes.length === 0) {
+  const currentPage = pages[currentPageIndex] ?? pages[0];
+
+  // Reset to first page when source changes
+  useEffect(() => {
+    setCurrentPageIndex(0);
+  }, [docId, pages.join(',')]);
+
+  // Bboxes for the currently displayed page only
+  const currentBboxes = useMemo(() => {
+    if (!bboxes || bboxes.length === 0) return [];
+    return bboxes.filter(b => b.page === currentPage);
+  }, [bboxes, currentPage]);
+
+  // Skip rendering if no pages
+  if (!pages || pages.length === 0) {
     return (
       <div className="flex items-center justify-center h-full p-8 text-center">
         <div className="max-w-xs bg-black/60 backdrop-blur-md p-6 rounded-2xl border border-white/5">
@@ -39,21 +53,21 @@ export function PDFViewer({ docId, pageNumber, bboxes, content }: PDFViewerProps
 
   // Stable reference for bboxes to prevent infinite re-renders
   const bboxesKey = useMemo(() => {
-    if (!bboxes || bboxes.length === 0) return 'empty';
-    return bboxes.map(b => b.box?.join(',')).join('|');
-  }, [bboxes]);
+    if (!currentBboxes || currentBboxes.length === 0) return 'empty';
+    return currentBboxes.map(b => b.box?.join(',')).join('|');
+  }, [currentBboxes]);
 
   useEffect(() => {
     let isMounted = true;
 
     async function loadPage() {
-      if (!docId || !pageNumber) return;
+      if (!docId || !currentPage) return;
       
       setLoading(true);
       setError(null);
 
       try {
-        const url = `http://localhost:8000/api/files/${docId}/page/${pageNumber}`;
+        const url = API_URLS.pdfPage(docId, currentPage);
         
         const loadingTask = pdfjs.getDocument(url);
         const pdf = await loadingTask.promise;
@@ -62,7 +76,6 @@ export function PDFViewer({ docId, pageNumber, bboxes, content }: PDFViewerProps
 
         const page = await pdf.getPage(1);
         const viewport = page.getViewport({ scale });
-        viewportRef.current = viewport;
 
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -99,20 +112,11 @@ export function PDFViewer({ docId, pageNumber, bboxes, content }: PDFViewerProps
       overlayRef.current.style.width = `${viewport.width}px`;
       overlayRef.current.style.height = `${viewport.height}px`;
 
-      console.log('[PDFViewer] Received bboxes:', bboxes);
-      console.log('[PDFViewer] Page size:', page.view);
+      if (!currentBboxes || currentBboxes.length === 0) return;
 
-      if (!bboxes || bboxes.length === 0) {
-        console.warn('[PDFViewer] No bboxes to draw');
-        return;
-      }
-
-      console.log(`[PDFViewer] Drawing ${bboxes.length} bboxes`);
-
-      // Get the page's natural dimensions (PDF units)
-      const [pageX, pageY, pageWidth, pageHeight] = page.view;
+      const [, , pageWidth, pageHeight] = page.view;
       
-      bboxes.forEach((bbox: any, idx: number) => {
+      currentBboxes.forEach((bbox: any, idx: number) => {
         if (!bbox.box) return;
         
         const [x1, y1, x2, y2] = bbox.box;
@@ -151,7 +155,7 @@ export function PDFViewer({ docId, pageNumber, bboxes, content }: PDFViewerProps
     return () => {
       isMounted = false;
     };
-  }, [docId, pageNumber, scale, bboxesKey]);
+  }, [docId, currentPage, scale, bboxesKey]);
 
   return (
     <div className="relative flex-1 h-full overflow-hidden bg-black/5 flex flex-col">
@@ -183,7 +187,7 @@ export function PDFViewer({ docId, pageNumber, bboxes, content }: PDFViewerProps
         </button>
       </div>
 
-      <div className="flex-1 overflow-auto rag-scrollbar p-8" ref={containerRef}>
+      <div className="flex-1 overflow-auto rag-scrollbar p-8" ref={scrollContainerRef}>
         <div className="inline-block relative shadow-2xl border border-black/20 bg-white">
           <canvas ref={canvasRef} className="block" />
           <div ref={overlayRef} className="absolute top-0 left-0 pointer-events-none" />
@@ -204,6 +208,50 @@ export function PDFViewer({ docId, pageNumber, bboxes, content }: PDFViewerProps
           <div className="max-w-xs bg-black/60 backdrop-blur-md p-6 rounded-2xl border border-white/5">
             <div className="text-red-400 font-medium mb-1">Preview Offline</div>
             <div className="text-[10px] text-white/50">{error}</div>
+          </div>
+        </div>
+      )}
+
+      {/* Page navigation for multi-page sources */}
+      {pages.length > 1 && (
+        <div className="flex items-center justify-center gap-2 px-4 py-2 border-t border-white/10 bg-black/40 backdrop-blur-md">
+          <button
+            onClick={() => setCurrentPageIndex(i => Math.max(i - 1, 0))}
+            disabled={currentPageIndex === 0}
+            className="h-7 w-7 flex items-center justify-center rounded-lg hover:bg-white/10 text-white/70 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            title="Previous page"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          
+          <div className="flex items-center gap-1">
+            {pages.map((page, idx) => (
+              <button
+                key={page}
+                onClick={() => setCurrentPageIndex(idx)}
+                className={`h-7 min-w-[28px] px-1.5 rounded-lg text-[11px] font-semibold transition-all ${
+                  idx === currentPageIndex
+                    ? 'bg-primary text-primary-foreground shadow-[0_0_8px_rgba(var(--primary),0.3)]'
+                    : 'text-white/50 hover:bg-white/10 hover:text-white/80'
+                }`}
+                title={`Go to page ${page}`}
+              >
+                {page}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={() => setCurrentPageIndex(i => Math.min(i + 1, pages.length - 1))}
+            disabled={currentPageIndex === pages.length - 1}
+            className="h-7 w-7 flex items-center justify-center rounded-lg hover:bg-white/10 text-white/70 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            title="Next page"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+
+          <div className="text-[10px] text-white/40 ml-1">
+            Page {currentPage} of {pages.length}
           </div>
         </div>
       )}
