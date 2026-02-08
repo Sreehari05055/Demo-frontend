@@ -223,6 +223,20 @@
     line-height: 1.6;
   }
 }
+  /* Make links in markdown output clearly visible */
+  .rag-prose a {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 2px;
+    color: hsl(var(--primary));
+    font-weight: 600;
+    transition: color 0.15s ease, background-color 0.15s ease;
+  }
+
+  .rag-prose a:hover {
+    color: hsl(var(--primary));
+    background: rgba(209, 255, 189, 0.08);
+  }
 
 /* Gooey Cell / Virus Blob Animation (Idea 2) */
 .gooey-container {
